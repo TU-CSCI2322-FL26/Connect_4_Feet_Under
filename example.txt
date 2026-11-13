@@ -1,0 +1,31 @@
+here's what I'm imaginging the board should be represented when played in the terminal:
+
+6 rows and 7 colums, which means 7 lists each of length 6
+
+Begninning of the game:
+·······
+·······
+·······
+·······
+·······
+·······
+
+First move:
+·······
+·······
+·······
+·······
+·······
+···Y···
+
+where Y represents the color of playerOne, who always goes first
+
+Second move:
+·······
+·······
+·······
+·······
+·······
+···Y·R·
+
+etc. etc.
