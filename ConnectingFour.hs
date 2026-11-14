@@ -1,6 +1,6 @@
 -- custom datas and type aliases!
 data Player = PlayerOne | PlayerTwo deriving (Eq, Show)
-type Move = Integer
+type Move = Int
 type Piece = Player
 type GameState = ([Column], Player)
 type Column = (Int, [Piece])
