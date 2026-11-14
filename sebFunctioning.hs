@@ -65,8 +65,8 @@ hasWon (columns , _) = let resultColumns = checkColumns (removeIndices columns)
                              in if resultLR /= Nothing then resultLR else
                                 if resultRL /= Nothing then resultRL else
                                 Nothing
-    checkDiagonalsLR ((_:_:_:p1:p1s):(_:_:p2:p2s):(_:p3:p3s):(p4:p4s):ps) = let checkedDiagonal = checkFour (p1:p1s) (p2:p2s) (p3:p3s) (p4:p4s)
-                                                                            in if checkedDiagonal /= Nothing then checkedDiagonal else checkDiagonalsLR ((_:_:_:p2s):(_:_:p3s):(_:p4s):ps)
+    checkDiagonalsLR ((a:b:c:p1:p1s):(d:e:p2:p2s):(f:p3:p3s):(p4:p4s):ps) = let checkedDiagonal = checkFour (p1:p1s) (p2:p2s) (p3:p3s) (p4:p4s)
+                                                                            in if checkedDiagonal /= Nothing then checkedDiagonal else checkDiagonalsLR ((d:e:p2:p2s):(f:p3:p3s):(p4:p4s):ps)
     checkDiagonalsLR _ = Nothing
 
 
@@ -87,7 +87,7 @@ prettyPrint (cols, turn) =
         getPieceAt rowIdx (_, pieces) =
             if rowIdx < length pieces
                 then Just (pieces !! rowIdx) -- yeah yeah whatever i wanna use it so im using it
-                else Nothing
+                else Nothing -- bigger than thing, bad.
         
         renderRow :: Int -> String
         renderRow rowIdx =
