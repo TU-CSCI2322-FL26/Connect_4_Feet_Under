@@ -102,16 +102,9 @@ prettyPrintHelper (cols, turn) =
         renderRow rowIdx =
             "| " ++ unwords [showCell (getPieceAt rowIdx col) | col <- cols] ++ " |"
         
-        rows :: [String]
-        rows = [renderRow r | r <- [5, 4..0]]
-
-        divider :: String
+        rows = [renderRow r | r <- [5, 4, 3, 2, 1, 0]]
         divider = "+---------------+"
-
-        colNumbers :: String
         colNumbers = "  1 2 3 4 5 6 7  "
-
-        turnText :: String
         turnText = "Current Turn: " ++ show turn
 
 
