@@ -8,7 +8,7 @@ type Move = Int
 type Piece = Player
 type GameState = ([Column], Player)
 type Column = (Int, [Piece])
-type Winner = Maybe Player 
+type Winner = Maybe Player --data Winner Tie | Won Player deriving (Eq, Show)
 
 --Initial GameState
 initialColumns :: [Column]
@@ -22,58 +22,57 @@ opponent PlayerTwo = PlayerOne
 
 --takes a move, checks if it's valid, and returns the new GameState
 makeAMove :: Move -> GameState -> GameState
-makeAMove mv gs = --undefined
+makeAMove mv gs =
     if elem mv validMoves
         then 
             let turn = opponent (snd gs)
-                splitColumns = splitAt (mv - 1) (fst gs)
-                beforeCols = fst splitColumns
-                (c:cs) = snd splitColumns
+                (beforeCols, (c:cs)) = splitAt (mv - 1) (fst gs)
                 newCol = (mv, snd c ++ [snd gs])
                 cols = beforeCols ++ [newCol] ++ cs
             in  (cols, turn)
         else error "Not a valid move!"
-    where validMoves = [ fst col | col <- fst gs]--, length (snd col) < 8 ]
+    where validMoves = [ fst col | col <- fst gs, length (snd col) < 6 ]
 
 legalMoves :: GameState -> [Move]
 legalMoves gs = [ fst col | col <- fst gs ]
 
+combineMaybes :: Maybe a -> Maybe a -> Maybe a
+combineMaybes (Just a) _ = Just a
+combineMaybes _ (Just a) = Just a
+combineMaybes _ _ = Nothing
+
 hasWon :: GameState -> Maybe Player --Winner
-hasWon (columns , _) = let resultColumns = checkColumns (removeIndices columns)
-                           resultRows = checkRows (removeIndices columns)
-                           resultDiagonals = checkDiagonals (removeIndices columns)
-                       in if resultColumns /= Nothing then resultColumns else
-                          if resultRows /= Nothing then resultRows else
-                          if resultDiagonals /= Nothing then resultDiagonals else
-                          Nothing where
-
-    removeIndices columns = map snd columns
-
-    reverseColumns columns = map reverse columns
-
+hasWon (columns , _) = 
+    let resultColumns = checkColumns removeIndices
+        resultRows = checkRows removeIndices
+        resultDiagonals = checkDiagonals removeIndices
+    in resultColumns `combineMaybes` resultRows `combineMaybes` resultDiagonals
+    where
+    removeIndices = map snd columns
 
     checkColumns [] = Nothing
-    checkColumns (c:cs) = let checkedColumn = checkColumn c
-                          in if checkedColumn /= Nothing then checkedColumn else checkColumns cs
+    checkColumns (c:cs) = checkColumn c `combineMaybes` checkColumns cs
     checkColumn (p1:p2:p3:p4:ps) = if p1 == p2 && p2 == p3 && p3 == p4 then Just p1 else checkColumn (p2:p3:p4:ps)
     checkColumn _ = Nothing
 
 
-    checkRows ((p1:p1s):(p2:p2s):(p3:p3s):(p4:p4s):ps) = let checkedRow = checkFour (p1:p1s) (p2:p2s) (p3:p3s) (p4:p4s)
-                                                         in if checkedRow /= Nothing then checkedRow else checkRows ((p2:p2s):(p3:p3s):(p4:p4s):ps)
+    checkRows ((p1:p1s):(p2:p2s):(p3:p3s):(p4:p4s):ps) = 
+        let checkedRow = checkFour (p1:p1s) (p2:p2s) (p3:p3s) (p4:p4s)
+        in if checkedRow /= Nothing then checkedRow else checkRows ((p2:p2s):(p3:p3s):(p4:p4s):ps)
     checkRows _ = Nothing
 
-
-    checkDiagonals columns = let resultLR = checkDiagonalsLR columns
-                                 resultRL = checkDiagonalsLR (reverseColumns columns)
-                             in if resultLR /= Nothing then resultLR else
-                                if resultRL /= Nothing then resultRL else
-                                Nothing
-    checkDiagonalsLR ((a:b:c:p1:p1s):(d:e:p2:p2s):(f:p3:p3s):(p4:p4s):ps) = let checkedDiagonal = checkFour (p1:p1s) (p2:p2s) (p3:p3s) (p4:p4s)
-                                                                            in if checkedDiagonal /= Nothing then checkedDiagonal else checkDiagonalsLR ((d:e:p2:p2s):(f:p3:p3s):(p4:p4s):ps)
-    checkDiagonalsLR _ = Nothing
-
-
+    -- checkDiagonals columns = 
+    --     let resultLR = checkDiagonalsLR columns
+    --         resultRL = checkDiagonalsLR (reverseColumns columns)
+    --     in  if resultLR /= Nothing then resultLR else
+    --         if resultRL /= Nothing then resultRL else Nothing
+    checkDiagonals (c1:c2:c3:c4:cs) =    (checkFour c1 (drop 1 c2) (drop 2 c3) (drop 3 c4)) `combineMaybes` 
+                                        (checkFour (drop 3 c1) (drop 2 c2) (drop 1 c3) c4) `combineMaybes`
+                                        checkDiagonals (c2:c3:c4:cs)
+    -- checkDiagonalsLR ((a:b:c:p1:p1s):(d:e:p2:p2s):(f:p3:p3s):(p4:p4s):ps) = 
+    --     let checkedDiagonal = checkFour (p1:p1s) (p2:p2s) (p3:p3s) (p4:p4s)
+    --     in if checkedDiagonal /= Nothing then checkedDiagonal else checkDiagonalsLR ((d:e:p2:p2s):(f:p3:p3s):(p4:p4s):ps)
+    checkDiagonals _ = Nothing
     checkFour (p1:p1s) (p2:p2s) (p3:p3s) (p4:p4s) = if p1 == p2 && p2 == p3 && p3 == p4 then Just p1 else checkFour p1s p2s p3s p4s
     checkFour _ _ _ _ = Nothing
 
@@ -81,10 +80,10 @@ tgs1 :: GameState
 tgs1 = ([(1,[]),(2,[]),(3,[PlayerOne, PlayerOne, PlayerOne, PlayerOne]),(4,[]),(5,[]),(6,[]),(7,[])],PlayerOne) --PlayerOne wins verticaly
 
 prettyPrint :: GameState -> IO ()
-prettyPrint gs = putStr $ prettyPrintHelper gs
+prettyPrint gs = putStr $ prettyShowGame gs
 
-prettyPrintHelper :: GameState -> String
-prettyPrintHelper (cols, turn) =
+prettyShowGame :: GameState -> String
+prettyShowGame (cols, turn) =
     unlines ([""] ++ rows ++ [divider, colNumbers, "", turnText] ++ [""])
     where
         showCell :: Maybe Piece -> String
@@ -106,7 +105,6 @@ prettyPrintHelper (cols, turn) =
         divider = "+---------------+"
         colNumbers = "  1 2 3 4 5 6 7  "
         turnText = "Current Turn: " ++ show turn
-
 
 playGame :: GameState -> IO ()
 playGame gs = do
