@@ -40,8 +40,8 @@ legalMoves gs = [ fst col | col <- fst gs ]
 
 hasWon :: GameState -> Maybe Player --Winner
 hasWon (columns , _) = let resultColumns = checkColumns (removeIndices columns)
-                           resultRows = checkRows (reverseColumns (removeIndices columns))
-                           resultDiagonals = checkDiagonals (reverseColumns (removeIndices columns))
+                           resultRows = checkRows (removeIndices columns)
+                           resultDiagonals = checkDiagonals (removeIndices columns)
                        in if resultColumns /= Nothing then resultColumns else
                           if resultRows /= Nothing then resultRows else
                           if resultDiagonals /= Nothing then resultDiagonals else
