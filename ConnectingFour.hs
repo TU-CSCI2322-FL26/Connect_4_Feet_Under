@@ -23,7 +23,7 @@ opponent PlayerTwo = PlayerOne
 --takes a move, checks if it's valid, and returns the new GameState
 makeAMove :: Move -> GameState -> GameState
 makeAMove mv gs =
-    if elem mv validMoves
+    if elem mv thisLegalMoves
         then 
             let turn = opponent (snd gs)
                 (beforeCols, (c:cs)) = splitAt (mv - 1) (fst gs)
@@ -31,10 +31,10 @@ makeAMove mv gs =
                 cols = beforeCols ++ [newCol] ++ cs
             in  (cols, turn)
         else error "Not a valid move!"
-    where validMoves = [ fst col | col <- fst gs, length (snd col) < 6 ]
+    where thisLegalMoves = legalMoves gs
 
 legalMoves :: GameState -> [Move]
-legalMoves gs = [ fst col | col <- fst gs ]
+legalMoves gs = [ fst col | col <- fst gs, length (snd col) < 6 ]
 
 combineMaybes :: Maybe a -> Maybe a -> Maybe a
 combineMaybes (Just a) _ = Just a
