@@ -1,14 +1,12 @@
 module ConnectingFour where
 
-import Text.Read
-
 -- custom datas and type aliases!
 data Player = PlayerOne | PlayerTwo deriving (Eq, Show)
 type Move = Int
 type Piece = Player
 type GameState = ([Column], Player)
 type Column = (Int, [Piece])
-type Winner = Maybe Player --data Winner Tie | Won Player deriving (Eq, Show)
+data Winner = Tie | Won Player deriving (Eq, Show)
 
 --Initial GameState
 initialColumns :: [Column]
@@ -23,15 +21,15 @@ opponent PlayerTwo = PlayerOne
 --takes a move, checks if it's valid, and returns the new GameState
 makeAMove :: Move -> GameState -> GameState
 makeAMove mv gs =
-    if elem mv thisLegalMoves
-        then 
+    -- if elem mv thisLegalMoves
+    --     then 
             let turn = opponent (snd gs)
                 (beforeCols, (c:cs)) = splitAt (mv - 1) (fst gs)
                 newCol = (mv, snd c ++ [snd gs])
                 cols = beforeCols ++ [newCol] ++ cs
             in  (cols, turn)
-        else error "Not a valid move!"
-    where thisLegalMoves = legalMoves gs
+    --     else error "Not a valid move!"
+    -- where thisLegalMoves = legalMoves gs
 
 legalMoves :: GameState -> [Move]
 legalMoves gs = [ fst col | col <- fst gs, length (snd col) < 6 ]
@@ -75,6 +73,13 @@ hasWon (columns , _) =
     checkDiagonals _ = Nothing
     checkFour (p1:p1s) (p2:p2s) (p3:p3s) (p4:p4s) = if p1 == p2 && p2 == p3 && p3 == p4 then Just p1 else checkFour p1s p2s p3s p4s
     checkFour _ _ _ _ = Nothing
+
+--fullBoard detects if all the pieces are filled and there is no winner,, meaning it is a tie
+fullBoard :: GameState -> Bool
+fullBoard gs = 
+    let cols = map snd (fst gs)
+        totalPieces = sum (map length cols)
+    in  totalPieces > 42
 
 tgs1 :: GameState
 tgs1 = ([(1,[]),(2,[]),(3,[PlayerOne, PlayerOne, PlayerOne, PlayerOne]),(4,[]),(5,[]),(6,[]),(7,[])],PlayerOne) --PlayerOne wins verticaly

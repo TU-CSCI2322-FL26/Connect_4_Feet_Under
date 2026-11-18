@@ -1,5 +1,6 @@
 module InputOutput where
 
+import Text.Read
 import ConnectingFour
 
 prettyPrint :: GameState -> IO ()
@@ -36,11 +37,19 @@ playGame gs = do
     mv <- getLine
     case readMaybe mv :: Maybe Int of
         Just n  -> 
-            let newGS = makeAMove n gs
-            in     if hasWon newGS == Just PlayerOne
-        then putStrLn "Player One wins!"
-        else if hasWon newGS == Just PlayerTwo
-            then putStrLn "Player Two wins!"
-        else playGame newGS
-
+            if elem n (legalMoves gs)
+                then
+                    let newGS = makeAMove n gs
+                    in  if hasWon newGS == Just PlayerOne
+                            then prettyPrint newGS >> putStrLn "Player One wins :D"
+                        else if hasWon newGS == Just PlayerTwo
+                            then prettyPrint newGS >> putStrLn "Player Two wins :D"
+                        else if fullBoard newGS == True
+                            then prettyPrint newGS >> putStrLn "Tie, no player wins :("
+                        else playGame newGS
+                else putStrLn "That is not a valid move >:(" >> playGame gs
         Nothing -> playGame gs
+            -- case readMaybe n :: Maybe Char of
+            --     Just 'l' -> show (legalMoves gs)
+            --     Just 'q' -> putStrLn "Game quit!"
+            --     Nothing -> playGame gs
