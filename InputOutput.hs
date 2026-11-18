@@ -35,21 +35,18 @@ playGame gs = do
     prettyPrint gs
     putStrLn "Where would you like to move?"
     mv <- getLine
-    case readMaybe mv :: Maybe Int of
-        Just n  -> 
-            if elem n (legalMoves gs)
-                then
-                    let newGS = makeAMove n gs
-                    in  if hasWon newGS == Just PlayerOne
+    case (readMaybe mv :: Maybe Int, mv) of
+        (Just n, _)  -> 
+            case makeAMove n gs of
+                Just newGS ->  
+                        if hasWon newGS == Just PlayerOne
                             then prettyPrint newGS >> putStrLn "Player One wins :D"
                         else if hasWon newGS == Just PlayerTwo
                             then prettyPrint newGS >> putStrLn "Player Two wins :D"
                         else if fullBoard newGS == True
                             then prettyPrint newGS >> putStrLn "Tie, no player wins :("
                         else playGame newGS
-                else putStrLn "That is not a valid move >:(" >> playGame gs
-        Nothing -> playGame gs
-            -- case readMaybe n :: Maybe Char of
-            --     Just 'l' -> show (legalMoves gs)
-            --     Just 'q' -> putStrLn "Game quit!"
-            --     Nothing -> playGame gs
+                Nothing -> putStrLn "That is not a valid move >:(" >> playGame gs
+        (Nothing, "l") -> putStrLn (show (legalMoves gs)) >> playGame gs
+        (Nothing, "q") -> putStrLn "Game quit!"
+        (Nothing, _) -> putStrLn "That is not a valid move >:(" >> playGame gs

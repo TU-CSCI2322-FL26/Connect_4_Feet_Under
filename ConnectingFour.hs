@@ -19,15 +19,16 @@ opponent PlayerOne = PlayerTwo
 opponent PlayerTwo = PlayerOne
 
 --takes a move, checks if it's valid, and returns the new GameState
-makeAMove :: Move -> GameState -> GameState
-makeAMove mv gs =
-    -- if elem mv thisLegalMoves
-    --     then 
-            let turn = opponent (snd gs)
-                (beforeCols, (c:cs)) = splitAt (mv - 1) (fst gs)
-                newCol = (mv, snd c ++ [snd gs])
-                cols = beforeCols ++ [newCol] ++ cs
-            in  (cols, turn)
+makeAMove :: Move -> GameState -> Maybe GameState
+makeAMove mv (board,curP) =
+        case splitAt (mv-1) board of
+            (beforeCols, (c:cs)) ->
+                if mv < 1 || mv > 7 || length (snd c) > 5
+                then Nothing
+                else let newCol = (mv, snd c ++ [curP])
+                         cols = beforeCols ++ [newCol] ++ cs
+                     in  Just (cols, opponent curP)
+            _ -> Nothing
     --     else error "Not a valid move!"
     -- where thisLegalMoves = legalMoves gs
 
