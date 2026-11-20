@@ -45,37 +45,31 @@ hasWon (columns, _) =
     let resultColumns = checkColumns removeIndices
         resultRows = checkRows removeIndices
         resultDiagonals = checkDiagonals removeIndices
-    in case resultColumns `combineMaybes` resultRows `combineMaybes` resultDiagonals of
-        Just winner -> Just winner
-        Nothing -> if fullBoard (columns, PlayerOne) then Just Tie else Nothing
+    in case ((resultColumns PlayerOne) `combineMaybes` (resultRows PlayerOne) `combineMaybes` (resultDiagonals PlayerOne), (resultColumns PlayerTwo) `combineMaybes` (resultRows PlayerTwo) `combineMaybes` (resultDiagonals PlayerTwo)) of
+        (Just winner, Just winner') -> error "Both players cannot win simultaneously"
+        (Just winner, Nothing) -> Just winner
+        (Nothing, Just winner) -> Just winner
+        (Nothing, Nothing) -> if fullBoard (columns, PlayerOne) then Just Tie else Nothing
     where
     removeIndices = map snd columns
 
-    checkColumns [] = Nothing
-    checkColumns (c:cs) = checkColumn c `combineMaybes` checkColumns cs
-    checkColumn (p1:p2:p3:p4:ps) = if p1 == p2 && p2 == p3 && p3 == p4 then Just (Won p1) else checkColumn (p2:p3:p4:ps)
-    checkColumn _ = Nothing
+    checkColumns [] player = Nothing
+    checkColumns (c:cs) player = checkColumn c player `combineMaybes` checkColumns cs player
+    checkColumn (p1:p2:p3:p4:ps) player = if p1 == p2 && p2 == p3 && p3 == p4  && p1 == player then Just (Won player) else checkColumn (p2:p3:p4:ps) player
+    checkColumn _ player = Nothing
 
 
-    checkRows ((p1:p1s):(p2:p2s):(p3:p3s):(p4:p4s):ps) = 
-        let checkedRow = checkFour (p1:p1s) (p2:p2s) (p3:p3s) (p4:p4s)
-        in if checkedRow /= Nothing then checkedRow else checkRows ((p2:p2s):(p3:p3s):(p4:p4s):ps)
-    checkRows _ = Nothing
+    checkRows ((p1:p1s):(p2:p2s):(p3:p3s):(p4:p4s):ps) player = 
+        let checkedRow = checkFour (p1:p1s) (p2:p2s) (p3:p3s) (p4:p4s) player
+        in if checkedRow /= Nothing then checkedRow else checkRows ((p2:p2s):(p3:p3s):(p4:p4s):ps) player
+    checkRows _ player = Nothing
 
-    -- checkDiagonals columns = 
-    --     let resultLR = checkDiagonalsLR columns
-    --         resultRL = checkDiagonalsLR (reverseColumns columns)
-    --     in  if resultLR /= Nothing then resultLR else
-    --         if resultRL /= Nothing then resultRL else Nothing
-    checkDiagonals (c1:c2:c3:c4:cs) = (checkFour c1 (drop 1 c2) (drop 2 c3) (drop 3 c4)) `combineMaybes` 
-                                      (checkFour (drop 3 c1) (drop 2 c2) (drop 1 c3) c4) `combineMaybes`
-                                      checkDiagonals (c2:c3:c4:cs)
-    -- checkDiagonalsLR ((a:b:c:p1:p1s):(d:e:p2:p2s):(f:p3:p3s):(p4:p4s):ps) = 
-    --     let checkedDiagonal = checkFour (p1:p1s) (p2:p2s) (p3:p3s) (p4:p4s)
-    --     in if checkedDiagonal /= Nothing then checkedDiagonal else checkDiagonalsLR ((d:e:p2:p2s):(f:p3:p3s):(p4:p4s):ps)
-    checkDiagonals _ = Nothing
-    checkFour (p1:p1s) (p2:p2s) (p3:p3s) (p4:p4s) = if p1 == p2 && p2 == p3 && p3 == p4 then Just (Won p1) else checkFour p1s p2s p3s p4s
-    checkFour _ _ _ _ = Nothing
+    checkDiagonals (c1:c2:c3:c4:cs) player = (checkFour c1 (drop 1 c2) (drop 2 c3) (drop 3 c4) player) `combineMaybes` 
+                                      (checkFour (drop 3 c1) (drop 2 c2) (drop 1 c3) c4 player) `combineMaybes`
+                                      checkDiagonals (c2:c3:c4:cs) player
+    checkDiagonals _ player = Nothing
+    checkFour (p1:p1s) (p2:p2s) (p3:p3s) (p4:p4s) player = if p1 == p2 && p2 == p3 && p3 == p4 && p1 == player then Just (Won player) else checkFour p1s p2s p3s p4s player
+    checkFour _ _ _ _ player = Nothing
 
 --fullBoard detects if all the pieces are filled and there is no winner,, meaning it is a tie
 fullBoard :: GameState -> Bool
