@@ -39,9 +39,9 @@ playGame gs = do
         (Just n, _)  -> 
             case makeAMove n gs of
                 Just newGS ->  
-                        if hasWon newGS == Just PlayerOne
+                        if hasWon newGS == Just (Won PlayerOne)
                             then prettyPrint newGS >> putStrLn "Player One wins :D"
-                        else if hasWon newGS == Just PlayerTwo
+                        else if hasWon newGS == Just (Won PlayerTwo)
                             then prettyPrint newGS >> putStrLn "Player Two wins :D"
                         else if fullBoard newGS == True
                             then prettyPrint newGS >> putStrLn "Tie, no player wins :("
