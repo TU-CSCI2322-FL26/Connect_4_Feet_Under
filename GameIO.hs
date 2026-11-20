@@ -24,7 +24,7 @@ readGame input =
         (playerLine : colLines) ->
             let currentPlayer = parsePlayer playerLine
                 columns = map parseColumn colLines
-            in (columns, currentPLayer)
+            in (columns, currentPlayer)
         [] -> error "no input for readGame"
 
 parsePlayer :: String -> Player
