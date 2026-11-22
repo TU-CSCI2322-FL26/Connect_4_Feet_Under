@@ -24,7 +24,7 @@ readGame input =
         (playerLine : colLines) ->
             let currentPlayer = parsePlayer playerLine
                 columns = map parseColumn colLines
-            in (columns, currentPLayer)
+            in (columns, currentPlayer)
         [] -> error "no input for readGame"
 
 parsePlayer :: String -> Player
@@ -40,3 +40,15 @@ parseColumn line =
                 pieces = map parsePlayer pieceStrs
             in (colNum, pieces)
         [] -> error "empty column line for readGame"
+
+showGame :: GameState -> String
+showGame (columns, currentPlayer) =
+    unlines (showPlayer currentPlayer : map renderCol columns)
+    where
+        showPlayer :: Player -> String
+        showPlayer PlayerOne = "1"
+        showPlayer PlayerTwo = "2"
+        
+        renderCol :: Column -> String
+        renderCol (colNum, pieces) =
+            unwords (show colNum : map showPlayer pieces)
