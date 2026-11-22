@@ -20,14 +20,14 @@ opponent PlayerTwo = PlayerOne
 
 --takes a move, checks if it's valid, and returns the new GameState
 makeAMove :: Move -> GameState -> Maybe GameState
-makeAMove mv (board,curP) =
-        case splitAt (mv-1) board of
+makeAMove mv (cols, turn) =
+        case splitAt (mv-1) cols of
             (beforeCols, (c:cs)) ->
                 if mv < 1 || mv > 7 || length (snd c) > 5
                 then Nothing
-                else let newCol = (mv, snd c ++ [curP])
+                else let newCol = (mv, snd c ++ [turn])
                          cols = beforeCols ++ [newCol] ++ cs
-                     in  Just (cols, opponent curP)
+                     in  Just (cols, opponent turn)
             _ -> Nothing
     --     else error "Not a valid move!"
     -- where thisLegalMoves = legalMoves gs
@@ -62,17 +62,10 @@ hasWon (columns, _) =
         in if checkedRow /= Nothing then checkedRow else checkRows ((p2:p2s):(p3:p3s):(p4:p4s):ps)
     checkRows _ = Nothing
 
-    -- checkDiagonals columns = 
-    --     let resultLR = checkDiagonalsLR columns
-    --         resultRL = checkDiagonalsLR (reverseColumns columns)
-    --     in  if resultLR /= Nothing then resultLR else
-    --         if resultRL /= Nothing then resultRL else Nothing
     checkDiagonals (c1:c2:c3:c4:cs) = (checkFour c1 (drop 1 c2) (drop 2 c3) (drop 3 c4)) `combineMaybes` 
                                       (checkFour (drop 3 c1) (drop 2 c2) (drop 1 c3) c4) `combineMaybes`
                                       checkDiagonals (c2:c3:c4:cs)
-    -- checkDiagonalsLR ((a:b:c:p1:p1s):(d:e:p2:p2s):(f:p3:p3s):(p4:p4s):ps) = 
-    --     let checkedDiagonal = checkFour (p1:p1s) (p2:p2s) (p3:p3s) (p4:p4s)
-    --     in if checkedDiagonal /= Nothing then checkedDiagonal else checkDiagonalsLR ((d:e:p2:p2s):(f:p3:p3s):(p4:p4s):ps)
+
     checkDiagonals _ = Nothing
     checkFour (p1:p1s) (p2:p2s) (p3:p3s) (p4:p4s) = if p1 == p2 && p2 == p3 && p3 == p4 then Just (Won p1) else checkFour p1s p2s p3s p4s
     checkFour _ _ _ _ = Nothing
@@ -86,3 +79,17 @@ fullBoard gs =
 
 tgs1 :: GameState
 tgs1 = ([(1,[]),(2,[]),(3,[PlayerOne, PlayerOne, PlayerOne, PlayerOne]),(4,[]),(5,[]),(6,[]),(7,[])],PlayerOne) --PlayerOne wins verticaly
+
+whoWillWin :: GameState -> Winner
+whoWillWin gs@(cols, turn) = 
+    if hasWon gs != Nothing
+        then hasWon gs
+        else
+            let allmvs = legalMoves gs
+                nextStates = [makeAMove mv gs | mv <- allmvs] -- a list of possible GameStates
+                stateScores = [whoWillWin gs | gs <- nextStates]
+                bestState = bestFor turn stateScores
+            in whoWillWin bestState
+
+bestFor :: Player -> [Winner] -> Winner
+bestFor turn wins = 
