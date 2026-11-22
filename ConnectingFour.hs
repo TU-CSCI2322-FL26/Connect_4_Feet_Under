@@ -82,15 +82,30 @@ tgs1 :: GameState
 tgs1 = ([(1,[]),(2,[]),(3,[PlayerOne, PlayerOne, PlayerOne, PlayerOne]),(4,[]),(5,[]),(6,[]),(7,[])],PlayerOne) --PlayerOne wins verticaly
 
 whoWillWin :: GameState -> Winner
-whoWillWin gs@(cols, turn) = 
-    if hasWon gs != Nothing
-        then hasWon gs
-        else
+whoWillWin gs@(cols, turn) =
+    case hasWon gs of
+        Just winner -> winner
+        Nothing ->
             let allmvs = legalMoves gs
-                nextStates = [makeAMove mv gs | mv <- allmvs] -- a list of possible GameStates
-                stateScores = [whoWillWin gs | gs <- nextStates]
-                bestState = bestFor turn stateScores
-            in whoWillWin bestState
+                nextStates = [ newGS | mv <- allmvs,Just newGS <- [makeAMove mv gs] ]
+                stateScores = [ whoWillWin newGS | newGS <- nextStates ]
+            in bestFor turn stateScores
 
 bestFor :: Player -> [Winner] -> Winner
-bestFor turn wins = 
+bestFor turn wins =
+    if elem (Won turn) wins
+        then Won turn
+    else if elem Tie wins
+        then Tie
+    else Won (opponent turn)
+
+bestMove :: GameState -> Maybe Move
+bestMove gs@(_, turn)
+    | null (legalMoves gs) = error "No legal moves available"
+    | otherwise =   let allmvs = legalMoves gs
+                        moveScores = [ (mv, whoWillWin newGS) | mv <- allmvs, Just newGS <- [makeAMove mv gs] ]
+                        bestOutcome = bestFor turn (map snd moveScores)
+                        bestMoves = [ mv | (mv, outcome) <- moveScores, outcome == bestOutcome ]
+                    in  case bestMoves of
+                        (mv:_) -> Just mv
+                        [] -> Nothing
