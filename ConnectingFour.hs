@@ -20,14 +20,14 @@ opponent PlayerTwo = PlayerOne
 
 --takes a move, checks if it's valid, and returns the new GameState
 makeAMove :: Move -> GameState -> Maybe GameState
-makeAMove mv (board,curP) =
-        case splitAt (mv-1) board of
+makeAMove mv (cols, turn) =
+        case splitAt (mv-1) cols of
             (beforeCols, (c:cs)) ->
                 if mv < 1 || mv > 7 || length (snd c) > 5
                 then Nothing
-                else let newCol = (mv, snd c ++ [curP])
+                else let newCol = (mv, snd c ++ [turn])
                          cols = beforeCols ++ [newCol] ++ cs
-                     in  Just (cols, opponent curP)
+                     in  Just (cols, opponent turn)
             _ -> Nothing
     --     else error "Not a valid move!"
     -- where thisLegalMoves = legalMoves gs
@@ -80,3 +80,32 @@ fullBoard gs =
 
 tgs1 :: GameState
 tgs1 = ([(1,[]),(2,[]),(3,[PlayerOne, PlayerOne, PlayerOne, PlayerOne]),(4,[]),(5,[]),(6,[]),(7,[])],PlayerOne) --PlayerOne wins verticaly
+
+whoWillWin :: GameState -> Winner
+whoWillWin gs@(cols, turn) =
+    case hasWon gs of
+        Just winner -> winner
+        Nothing ->
+            let allmvs = legalMoves gs
+                nextStates = [ newGS | mv <- allmvs,Just newGS <- [makeAMove mv gs] ]
+                stateScores = [ whoWillWin newGS | newGS <- nextStates ]
+            in bestFor turn stateScores
+
+bestFor :: Player -> [Winner] -> Winner
+bestFor turn wins =
+    if elem (Won turn) wins
+        then Won turn
+    else if elem Tie wins
+        then Tie
+    else Won (opponent turn)
+
+bestMove :: GameState -> Maybe Move
+bestMove gs@(_, turn)
+    | null (legalMoves gs) = error "No legal moves available"
+    | otherwise =   let allmvs = legalMoves gs
+                        moveScores = [ (mv, whoWillWin newGS) | mv <- allmvs, Just newGS <- [makeAMove mv gs] ]
+                        bestOutcome = bestFor turn (map snd moveScores)
+                        bestMoves = [ mv | (mv, outcome) <- moveScores, outcome == bestOutcome ]
+                    in  case bestMoves of
+                        (mv:_) -> Just mv
+                        [] -> Nothing
